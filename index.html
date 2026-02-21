@@ -2,9 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>crypto-currencies-tracker</title>
+    <meta name="description" content="CryptoAero — Real-time crypto prices, converter, and price history. Aerogel-inspired dashboard." />
+    <title>CryptoAero — Crypto Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      // Apply dark class immediately to avoid flash
+      // Wrapped in try/catch for sandboxed environments (e.g. VS Code Simple Browser)
+      (function() {
+        try {
+          var saved = localStorage.getItem('crypto-theme');
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (saved === 'dark' || (!saved && prefersDark)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch(e) { /* sandboxed - skip */ }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
