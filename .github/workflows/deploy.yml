@@ -36,6 +36,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_LCW_API_KEY: ${{ secrets.VITE_LCW_API_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
