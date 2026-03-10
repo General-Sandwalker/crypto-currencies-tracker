@@ -20,7 +20,7 @@ function CoinSelect({
   value: string;
   onChange: (id: string) => void;
 }) {
-  const selected = coins.find(c => c.id === value);
+  const selected = coins.find(c => c.code === value);
   return (
     <div className="relative">
       <select
@@ -32,14 +32,14 @@ function CoinSelect({
           backdrop-blur-sm transition-all cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
       >
         {coins.map(c => (
-          <option key={c.id} value={c.id} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
+          <option key={c.code} value={c.code} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
             {c.name} ({c.symbol.toUpperCase()})
           </option>
         ))}
       </select>
       {selected && (
         <img
-          src={selected.image}
+          src={selected.png64}
           alt={selected.name}
           className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full pointer-events-none"
         />
@@ -53,21 +53,21 @@ function CoinSelect({
 }
 
 export default function Converter({ coins, loading, currency, error, refetch }: ConverterProps) {
-  const [fromId, setFromId] = useState('bitcoin');
-  const [toId, setToId] = useState('ethereum');
+  const [fromId, setFromId] = useState('BTC');
+  const [toId, setToId] = useState('ETH');
   const [amount, setAmount] = useState('1');
 
-  const fromCoin = useMemo(() => coins.find(c => c.id === fromId), [coins, fromId]);
-  const toCoin = useMemo(() => coins.find(c => c.id === toId), [coins, toId]);
+  const fromCoin = useMemo(() => coins.find(c => c.code === fromId), [coins, fromId]);
+  const toCoin = useMemo(() => coins.find(c => c.code === toId), [coins, toId]);
 
   const convertedAmount = useMemo(() => {
     if (!fromCoin || !toCoin || !amount || isNaN(Number(amount))) return null;
-    return (Number(amount) * fromCoin.current_price) / toCoin.current_price;
+    return (Number(amount) * fromCoin.rate) / toCoin.rate;
   }, [fromCoin, toCoin, amount]);
 
   const fromValueInBase = useMemo(() => {
     if (!fromCoin || !amount || isNaN(Number(amount))) return null;
-    return Number(amount) * fromCoin.current_price;
+    return Number(amount) * fromCoin.rate;
   }, [fromCoin, amount]);
 
   const handleSwap = () => {
@@ -80,11 +80,11 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
   const crossRates = useMemo(() => {
     if (!fromCoin) return [];
     return coins
-      .filter(c => ['bitcoin', 'ethereum', 'tether', 'usd-coin', 'binancecoin'].includes(c.id) && c.id !== fromId)
+      .filter(c => ['BTC', 'ETH', 'USDT', 'USDC', 'BNB'].includes(c.code) && c.code !== fromId)
       .slice(0, 5)
       .map(c => ({
         coin: c,
-        rate: fromCoin.current_price / c.current_price,
+        rate: fromCoin.rate / c.rate,
       }));
   }, [coins, fromCoin, fromId]);
 
@@ -119,7 +119,7 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
       {/* Header */}
       <div className="text-center mb-2">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Crypto Converter</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Live prices via CoinGecko</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Live prices via Live Coin Watch</p>
       </div>
 
       {/* Converter card */}
@@ -145,10 +145,10 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
           {fromCoin && fromValueInBase !== null && (
             <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between px-1">
               <span>
-                1 {fromCoin.symbol.toUpperCase()} = {formatPrice(fromCoin.current_price, currency)}
+                1 {fromCoin.symbol.toUpperCase()} = {formatPrice(fromCoin.rate, currency)}
               </span>
-              <span className={`font-semibold ${(fromCoin.price_change_percentage_24h ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                {formatPercent(fromCoin.price_change_percentage_24h)} 24h
+              <span className={`font-semibold ${(fromCoin.delta.day - 1) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                {formatPercent((fromCoin.delta.day - 1) * 100)} 24h
               </span>
             </p>
           )}
@@ -182,13 +182,13 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
             </p>
             {toCoin && (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {toCoin.symbol.toUpperCase()} · {formatPrice(toCoin.current_price, currency)} each
+                {toCoin.symbol.toUpperCase()} · {formatPrice(toCoin.rate, currency)} each
               </p>
             )}
           </div>
           {toCoin && (
-            <p className={`text-xs px-1 font-semibold ${(toCoin.price_change_percentage_24h ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-              {formatPercent(toCoin.price_change_percentage_24h)} 24h
+            <p className={`text-xs px-1 font-semibold ${(toCoin.delta.day - 1) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+              {formatPercent((toCoin.delta.day - 1) * 100)} 24h
             </p>
           )}
         </div>
@@ -202,9 +202,9 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
           </p>
           <div className="space-y-3">
             {crossRates.map(({ coin, rate }) => (
-              <div key={coin.id} className="flex items-center justify-between">
+              <div key={coin.code} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <img src={coin.image} alt={coin.name} className="w-6 h-6 rounded-full" />
+                  <img src={coin.png64} alt={coin.name} className="w-6 h-6 rounded-full" />
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{coin.name}</span>
                   <span className="text-xs text-slate-400 uppercase">{coin.symbol}</span>
                 </div>

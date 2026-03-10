@@ -34,11 +34,11 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
     list = [...list].sort((a, b) => {
       let diff = 0;
       switch (sortKey) {
-        case 'rank': diff = a.market_cap_rank - b.market_cap_rank; break;
-        case 'price': diff = a.current_price - b.current_price; break;
-        case 'change': diff = (a.price_change_percentage_24h ?? 0) - (b.price_change_percentage_24h ?? 0); break;
-        case 'marketcap': diff = a.market_cap - b.market_cap; break;
-        case 'volume': diff = a.total_volume - b.total_volume; break;
+        case 'rank': diff = a.rank - b.rank; break;
+        case 'price': diff = a.rate - b.rate; break;
+        case 'change': diff = a.delta.day - b.delta.day; break;
+        case 'marketcap': diff = a.cap - b.cap; break;
+        case 'volume': diff = a.volume - b.volume; break;
       }
       return sortDir === 'asc' ? diff : -diff;
     });
@@ -46,12 +46,12 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
   }, [coins, query, sortKey, sortDir]);
 
   // Global stats
-  const totalMcap = useMemo(() => coins.reduce((s, c) => s + c.market_cap, 0), [coins]);
-  const totalVol = useMemo(() => coins.reduce((s, c) => s + c.total_volume, 0), [coins]);
-  const gainers = useMemo(() => coins.filter(c => (c.price_change_percentage_24h ?? 0) > 0).length, [coins]);
-  const losers = useMemo(() => coins.filter(c => (c.price_change_percentage_24h ?? 0) < 0).length, [coins]);
-  const btc = useMemo(() => coins.find(c => c.id === 'bitcoin'), [coins]);
-  const btcDom = btc && totalMcap > 0 ? ((btc.market_cap / totalMcap) * 100).toFixed(1) : '--';
+  const totalMcap = useMemo(() => coins.reduce((s, c) => s + c.cap, 0), [coins]);
+  const totalVol = useMemo(() => coins.reduce((s, c) => s + c.volume, 0), [coins]);
+  const gainers = useMemo(() => coins.filter(c => c.delta.day > 1).length, [coins]);
+  const losers = useMemo(() => coins.filter(c => c.delta.day < 1).length, [coins]);
+  const btc = useMemo(() => coins.find(c => c.code === 'BTC'), [coins]);
+  const btcDom = btc && totalMcap > 0 ? ((btc.cap / totalMcap) * 100).toFixed(1) : '--';
 
   const SortBtn = ({ label, id }: { label: string; id: SortKey }) => (
     <button
@@ -161,7 +161,7 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filtered.map(coin => (
             <CoinCard
-              key={coin.id}
+              key={coin.code}
               coin={coin}
               currency={currency}
               onClick={() => onSelectCoin?.(coin)}
@@ -183,7 +183,7 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 font-medium">Top 20 — 24h Change Heatmap</p>
           <div className="flex flex-wrap gap-2">
             {coins.slice(0, 20).map(coin => {
-              const pct = coin.price_change_percentage_24h ?? 0;
+              const pct = (coin.delta.day - 1) * 100;
               const intensity = Math.min(Math.abs(pct) / 10, 1);
               const bg = pct >= 0
                 ? `rgba(16,185,129,${0.15 + intensity * 0.45})`
@@ -191,7 +191,7 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
               const text = pct >= 0 ? '#059669' : '#e11d48';
               return (
                 <div
-                  key={coin.id}
+                  key={coin.code}
                   title={coin.name}
                   style={{ background: bg, color: text }}
                   className="rounded-lg px-2.5 py-1.5 text-xs font-semibold cursor-default select-none transition-transform hover:scale-105"

@@ -1,21 +1,23 @@
 export interface Coin {
-  id: string;
+  code: string;
   symbol: string;
   name: string;
-  image: string;
-  current_price: number;
-  price_change_percentage_24h: number;
-  price_change_percentage_7d_in_currency?: number;
-  market_cap: number;
-  total_volume: number;
-  sparkline_in_7d: { price: number[] };
-  high_24h: number;
-  low_24h: number;
-  market_cap_rank: number;
-  circulating_supply: number;
-  total_supply: number | null;
-  ath: number;
-  atl: number;
+  png64: string;
+  rate: number;
+  cap: number;
+  volume: number;
+  rank: number;
+  delta: {
+    hour: number;
+    day: number;
+    week: number;
+    month: number;
+    quarter: number;
+    year: number;
+  };
+  circulatingSupply: number;
+  totalSupply: number | null;
+  allTimeHighUSD: number;
 }
 
 export interface HistoryPoint {

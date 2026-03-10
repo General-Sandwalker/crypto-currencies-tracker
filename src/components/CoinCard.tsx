@@ -11,7 +11,8 @@ interface CoinCardProps {
 }
 
 export default function CoinCard({ coin, currency, onClick, selected }: CoinCardProps) {
-  const isUp = (coin.price_change_percentage_24h ?? 0) >= 0;
+  const change24h = (coin.delta.day - 1) * 100;
+  const isUp = change24h >= 0;
 
   return (
     <button
@@ -28,13 +29,13 @@ export default function CoinCard({ coin, currency, onClick, selected }: CoinCard
       <div className="flex items-center gap-3 mb-3">
         <div className="relative">
           <img
-            src={coin.image}
+            src={coin.png64}
             alt={coin.name}
             className="w-9 h-9 rounded-full"
             loading="lazy"
           />
           <span className="absolute -bottom-1 -right-1 text-[9px] font-bold bg-slate-800 dark:bg-slate-700 text-slate-300 rounded-full px-1 leading-4 border border-white/10">
-            #{coin.market_cap_rank}
+            #{coin.rank}
           </span>
         </div>
         <div className="flex-1 min-w-0">
@@ -51,23 +52,23 @@ export default function CoinCard({ coin, currency, onClick, selected }: CoinCard
             : 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
         }`}>
           {isUp ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-          {formatPercent(coin.price_change_percentage_24h)}
+          {formatPercent(change24h)}
         </div>
       </div>
 
       {/* Sparkline */}
       <div className="my-2 -mx-1">
-        <Sparkline data={coin.sparkline_in_7d?.price ?? []} positive={isUp} height={44} />
+        <Sparkline data={[]} positive={isUp} height={44} />
       </div>
 
       {/* Price & stats */}
       <div className="mt-2">
         <p className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-          {formatPrice(coin.current_price, currency)}
+          {formatPrice(coin.rate, currency)}
         </p>
         <div className="flex justify-between mt-2 text-xs text-slate-500 dark:text-slate-400">
-          <span>MCap {formatMarketCap(coin.market_cap, currency)}</span>
-          <span>Vol {formatMarketCap(coin.total_volume, currency)}</span>
+          <span>MCap {formatMarketCap(coin.cap, currency)}</span>
+          <span>Vol {formatMarketCap(coin.volume, currency)}</span>
         </div>
       </div>
     </button>

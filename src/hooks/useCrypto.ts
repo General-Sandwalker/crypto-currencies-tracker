@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Coin, Currency } from '../types/crypto';
 
-const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
+const LCW_BASE = 'https://api.livecoinwatch.com';
+const API_KEY = import.meta.env.VITE_LCW_API_KEY as string;
 
 export const useCrypto = (currency: Currency = 'usd') => {
   const [coins, setCoins] = useState<Coin[]>([]);
@@ -10,18 +11,38 @@ export const useCrypto = (currency: Currency = 'usd') => {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchCoins = useCallback(async (silent = false) => {
+    if (!API_KEY) {
+      setError('No Live Coin Watch API key found. Set VITE_LCW_API_KEY in your .env file.');
+      setLoading(false);
+      return;
+    }
     try {
       if (!silent) setLoading(true);
       setError(null);
-      const res = await fetch(
-        `${COINGECKO_BASE}/coins/markets?vs_currency=${currency}&order=market_cap_desc&per_page=50&page=1&sparkline=true&price_change_percentage=24h%2C7d`
-      );
+      const res = await fetch(`${LCW_BASE}/coins/list`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': API_KEY,
+        },
+        body: JSON.stringify({
+          currency: currency.toUpperCase(),
+          sort: 'rank',
+          order: 'ascending',
+          offset: 0,
+          limit: 50,
+          meta: true,
+        }),
+      });
       if (!res.ok) {
-        if (res.status === 429) throw new Error('Rate limited by CoinGecko – auto-retrying in 60 seconds.');
-        if (res.status === 401 || res.status === 403) throw new Error('CoinGecko API access denied. Try adding a free API key at coingecko.com/api.');
-        throw new Error(`CoinGecko API error (${res.status}). Please try again.`);
+        const body = await res.json().catch(() => ({}));
+        const desc = body?.error?.description ?? '';
+        if (res.status === 429) throw new Error('Rate limited by Live Coin Watch – auto-retrying in 60 seconds.');
+        if (res.status === 401) throw new Error('Live Coin Watch API key is invalid. Check VITE_LCW_API_KEY.');
+        if (res.status === 403) throw new Error(`Live Coin Watch API access denied. ${desc}`);
+        throw new Error(`Live Coin Watch API error (${res.status}). ${desc}`);
       }
-      const data = await res.json();
+      const data: Coin[] = await res.json();
       setCoins(data);
       setLastUpdated(new Date());
     } catch (err) {
@@ -33,7 +54,6 @@ export const useCrypto = (currency: Currency = 'usd') => {
   }, [currency]);
 
   useEffect(() => {
-    // Clear stale data from previous currency immediately
     setCoins([]);
     setLoading(true);
     setError(null);
@@ -44,3 +64,4 @@ export const useCrypto = (currency: Currency = 'usd') => {
 
   return { coins, loading, error, lastUpdated, refetch: fetchCoins };
 };
+

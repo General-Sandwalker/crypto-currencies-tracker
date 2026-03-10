@@ -1,37 +1,59 @@
 import { useState, useEffect } from 'react';
 import type { HistoryPoint, Currency } from '../types/crypto';
 
-const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
+const LCW_BASE = 'https://api.livecoinwatch.com';
+const API_KEY = import.meta.env.VITE_LCW_API_KEY as string;
 
-export const useHistory = (coinId: string, days: number | 'max', currency: Currency = 'usd') => {
+function daysToRange(days: number | 'max'): { start: number; end: number } {
+  const end = Date.now();
+  if (days === 'max') {
+    return { start: new Date('2010-01-01').getTime(), end };
+  }
+  return { start: end - days * 24 * 60 * 60 * 1000, end };
+}
+
+export const useHistory = (coinCode: string, days: number | 'max', currency: Currency = 'usd') => {
   const [history, setHistory] = useState<HistoryPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!coinId) return;
+    if (!coinCode) return;
     const controller = new AbortController();
     let cancelled = false;
 
     const fetchHistory = async () => {
       setLoading(true);
       setError(null);
-      // Clear stale history immediately so old chart isn't shown for new selection
       setHistory([]);
       try {
-        const res = await fetch(
-          `${COINGECKO_BASE}/coins/${coinId}/market_chart?vs_currency=${currency}&days=${days}`,
-          { signal: controller.signal }
-        );
+        const { start, end } = daysToRange(days);
+        const res = await fetch(`${LCW_BASE}/coins/single/history`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-api-key': API_KEY,
+          },
+          body: JSON.stringify({
+            currency: currency.toUpperCase(),
+            code: coinCode,
+            start,
+            end,
+            meta: false,
+          }),
+          signal: controller.signal,
+        });
         if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          const desc = body?.error?.description ?? '';
           if (res.status === 429) throw new Error('Rate limited – please wait a moment and try again.');
-          if (res.status === 401 || res.status === 403) throw new Error('CoinGecko API access denied.');
-          throw new Error(`CoinGecko API error (${res.status}).`);
+          if (res.status === 401) throw new Error('Live Coin Watch API key is invalid.');
+          throw new Error(`Live Coin Watch API error (${res.status}). ${desc}`);
         }
         const data = await res.json();
         if (cancelled) return;
-        const points: HistoryPoint[] = (data.prices as [number, number][]).map(
-          ([timestamp, price]) => ({ timestamp, price })
+        const points: HistoryPoint[] = (data.history as { date: number; rate: number }[]).map(
+          ({ date, rate }) => ({ timestamp: date, price: rate })
         );
         setHistory(points);
       } catch (err) {
@@ -50,7 +72,8 @@ export const useHistory = (coinId: string, days: number | 'max', currency: Curre
       cancelled = true;
       controller.abort();
     };
-  }, [coinId, days, currency]);
+  }, [coinCode, days, currency]);
 
   return { history, loading, error };
 };
+

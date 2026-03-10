@@ -44,7 +44,7 @@ const CustomTooltip = ({
   );
 };
 
-export default function History({ coins, currency, initialCoinId = 'bitcoin', error: globalError, refetch }: HistoryProps) {
+export default function History({ coins, currency, initialCoinId = 'BTC', error: globalError, refetch }: HistoryProps) {
   const [coinId, setCoinId] = useState(initialCoinId);
   const [days, setDays] = useState<number | 'max'>(7);
 
@@ -55,7 +55,7 @@ export default function History({ coins, currency, initialCoinId = 'bitcoin', er
 
   const { history, loading, error } = useHistory(coinId, days, currency);
 
-  const selectedCoin = useMemo(() => coins.find(c => c.id === coinId), [coins, coinId]);
+  const selectedCoin = useMemo(() => coins.find(c => c.code === coinId), [coins, coinId]);
 
   const chartData = useMemo(
     () => history.map(p => ({ timestamp: p.timestamp, price: p.price })),
@@ -104,14 +104,14 @@ export default function History({ coins, currency, initialCoinId = 'bitcoin', er
               backdrop-blur-sm transition-all cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
           >
             {coins.map(c => (
-              <option key={c.id} value={c.id} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
+              <option key={c.code} value={c.code} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
                 {c.name} ({c.symbol.toUpperCase()})
               </option>
             ))}
           </select>
           {selectedCoin && (
             <img
-              src={selectedCoin.image}
+              src={selectedCoin.png64}
               alt={selectedCoin.name}
               className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full pointer-events-none"
             />
@@ -140,7 +140,7 @@ export default function History({ coins, currency, initialCoinId = 'bitcoin', er
       {/* Coin header */}
       {selectedCoin && (
         <div className="flex items-center gap-4">
-          <img src={selectedCoin.image} alt={selectedCoin.name} className="w-12 h-12 rounded-full" />
+          <img src={selectedCoin.png64} alt={selectedCoin.name} className="w-12 h-12 rounded-full" />
           <div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedCoin.name}</h2>
             <div className="flex items-center gap-2 mt-0.5">
@@ -278,12 +278,12 @@ export default function History({ coins, currency, initialCoinId = 'bitcoin', er
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6">
             {[
-              { label: 'Market Cap Rank', value: `#${selectedCoin.market_cap_rank}` },
-              { label: 'All-Time High', value: formatPrice(selectedCoin.ath, currency) },
-              { label: 'All-Time Low', value: formatPrice(selectedCoin.atl, currency) },
-              { label: 'Circulating Supply', value: selectedCoin.circulating_supply?.toLocaleString() ?? '—' },
-              { label: 'Total Supply', value: selectedCoin.total_supply?.toLocaleString() ?? '∞' },
-              { label: '24h Change', value: formatPercent(selectedCoin.price_change_percentage_24h) },
+              { label: 'Market Cap Rank', value: `#${selectedCoin.rank}` },
+              { label: 'All-Time High (USD)', value: formatPrice(selectedCoin.allTimeHighUSD, 'usd') },
+              { label: 'Circulating Supply', value: selectedCoin.circulatingSupply?.toLocaleString() ?? '—' },
+              { label: 'Total Supply', value: selectedCoin.totalSupply?.toLocaleString() ?? '∞' },
+              { label: '24h Change', value: formatPercent((selectedCoin.delta.day - 1) * 100) },
+              { label: '7d Change', value: formatPercent((selectedCoin.delta.week - 1) * 100) },
             ].map(item => (
               <div key={item.label}>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{item.label}</p>

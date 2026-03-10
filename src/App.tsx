@@ -12,7 +12,7 @@ type View = 'dashboard' | 'converter' | 'history';
 function AppContent() {
   const [view, setView] = useState<View>('dashboard');
   const [currency, setCurrency] = useState<Currency>('usd');
-  const [selectedCoinId, setSelectedCoinId] = useState<string>('bitcoin');
+  const [selectedCoinId, setSelectedCoinId] = useState<string>('BTC');
   const { coins, loading, error, lastUpdated, refetch } = useCrypto(currency);
 
   const handleSelectCoin = (coinId: string) => {
@@ -47,7 +47,7 @@ function AppContent() {
             error={error}
             currency={currency}
             refetch={refetch}
-            onSelectCoin={coin => handleSelectCoin(coin.id)}
+            onSelectCoin={coin => handleSelectCoin(coin.code)}
           />
         )}
         {view === 'converter' && (
@@ -59,7 +59,7 @@ function AppContent() {
       </main>
 
       <footer className="text-center py-8 text-xs text-slate-400 dark:text-slate-600">
-        Data powered by CoinGecko &bull; Prices update every 60s &bull; Not financial advice
+        Data powered by <a href="https://www.livecoinwatch.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-300 transition-colors">Live Coin Watch</a> &bull; Prices update every 60s &bull; Not financial advice
       </footer>
     </div>
   );

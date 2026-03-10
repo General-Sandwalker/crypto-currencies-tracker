@@ -9,7 +9,7 @@ A React + Vite + TailwindCSS cryptocurrency tracker dashboard hosted on GitHub P
 - **TailwindCSS v4** — CSS-first config via `src/index.css`, dark mode via `@custom-variant dark (&:is(.dark *))`
 - **Recharts** for price charts and sparklines
 - **Lucide React** for icons
-- **CoinGecko public API** — no API key required
+- **Live Coin Watch API** — requires `VITE_LCW_API_KEY` env var (free key at livecoinwatch.com/tools/api)
 
 ## Key Conventions
 - Always use `import type` for TypeScript types (verbatimModuleSyntax)
