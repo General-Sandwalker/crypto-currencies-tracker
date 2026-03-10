@@ -1,53 +1,141 @@
-import { useState, useMemo } from 'react';
-import { ArrowLeftRight, ChevronDown, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { ArrowLeftRight, Search, Loader2, AlertCircle, RefreshCw, X } from 'lucide-react';
 import type { Coin, Currency } from '../types/crypto';
 import { formatPrice, formatPercent } from '../utils/format';
+import { useSearchCoins } from '../hooks/useSearchCoins';
 
 interface ConverterProps {
-  coins: Coin[];
+  coins: Coin[];       // featured 4 — available immediately
   loading: boolean;
   currency: Currency;
   error?: string | null;
   refetch?: () => void;
 }
 
-function CoinSelect({
-  coins,
+// Searchable coin picker — lazy-loads full list on first focus
+function CoinSearchSelect({
+  allCoins,
   value,
   onChange,
+  onFocus,
+  searchLoading,
+  placeholder = 'Search coin…',
 }: {
-  coins: Coin[];
+  allCoins: Coin[];
   value: string;
-  onChange: (id: string) => void;
+  onChange: (code: string) => void;
+  onFocus: () => void;
+  searchLoading: boolean;
+  placeholder?: string;
 }) {
-  const selected = coins.find(c => c.code === value);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selected = allCoins.find(c => c.code === value);
+
+  const results = useMemo(() => {
+    if (!query.trim()) return allCoins.slice(0, 20); // show top 20 when no query
+    const q = query.toLowerCase();
+    return allCoins.filter(c =>
+      c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
+    ).slice(0, 20);
+  }, [allCoins, query]);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleOpen = () => {
+    onFocus();
+    setOpen(true);
+    setQuery('');
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const handleSelect = (code: string) => {
+    onChange(code);
+    setOpen(false);
+    setQuery('');
+  };
+
   return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="w-full appearance-none pl-12 pr-10 py-3 rounded-2xl text-sm font-semibold
+    <div ref={ref} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={handleOpen}
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold
           bg-white/70 dark:bg-slate-800 border border-white/30 dark:border-white/[0.08]
-          text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/40
-          backdrop-blur-sm transition-all cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+          text-slate-900 dark:text-white hover:bg-white/90 dark:hover:bg-slate-700
+          focus:outline-none focus:ring-2 focus:ring-emerald-500/40
+          backdrop-blur-sm transition-all cursor-pointer"
       >
-        {coins.map(c => (
-          <option key={c.code} value={c.code} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
-            {c.name} ({c.code})
-          </option>
-        ))}
-      </select>
-      {selected && (
-        <img
-          src={selected.png64}
-          alt={selected.name}
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full pointer-events-none"
-        />
+        {selected?.png64 && (
+          <img src={selected.png64} alt={selected.code} className="w-6 h-6 rounded-full flex-shrink-0" />
+        )}
+        <span className="flex-1 text-left">
+          {selected ? `${selected.name} (${selected.code})` : value}
+        </span>
+        <Search size={14} className="text-slate-400 flex-shrink-0" />
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 rounded-2xl shadow-2xl
+          bg-white dark:bg-slate-800 border border-white/40 dark:border-white/[0.08]
+          overflow-hidden backdrop-blur-xl">
+          {/* Search input */}
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-white/[0.06]">
+            <Search size={13} className="text-slate-400 flex-shrink-0" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder={placeholder}
+              className="flex-1 text-sm bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
+            />
+            {query && (
+              <button onClick={() => setQuery('')}>
+                <X size={13} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" />
+              </button>
+            )}
+          </div>
+
+          {/* Results */}
+          <div className="max-h-56 overflow-y-auto py-1">
+            {searchLoading && allCoins.length === 0 ? (
+              <div className="flex items-center gap-2 px-3 py-3 text-xs text-slate-400">
+                <Loader2 size={13} className="animate-spin text-emerald-500" /> Loading coins…
+              </div>
+            ) : results.length === 0 ? (
+              <p className="px-3 py-3 text-xs text-slate-400">No coins found</p>
+            ) : (
+              results.map(c => (
+                <button
+                  key={c.code}
+                  type="button"
+                  onClick={() => handleSelect(c.code)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-left transition-colors
+                    hover:bg-emerald-50 dark:hover:bg-emerald-500/10
+                    ${c.code === value ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-800 dark:text-slate-200'}`}
+                >
+                  {c.png64 && <img src={c.png64} alt={c.code} className="w-5 h-5 rounded-full flex-shrink-0" />}
+                  <span className="flex-1 truncate">{c.name}</span>
+                  <span className="text-xs text-slate-400 font-mono">{c.code}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
       )}
-      <ChevronDown
-        size={16}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-      />
     </div>
   );
 }
@@ -57,8 +145,18 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
   const [toId, setToId] = useState('ETH');
   const [amount, setAmount] = useState('1');
 
-  const fromCoin = useMemo(() => coins.find(c => c.code === fromId), [coins, fromId]);
-  const toCoin = useMemo(() => coins.find(c => c.code === toId), [coins, toId]);
+  const { triggerFetch, allCoins, loading: searchLoading } = useSearchCoins(currency);
+
+  // Merge featured 4 + full list (featured takes priority for up-to-date rates)
+  const mergedCoins = useMemo(() => {
+    const map = new Map<string, Coin>();
+    allCoins.forEach(c => map.set(c.code, c));
+    coins.forEach(c => map.set(c.code, c)); // featured overrides with live rates
+    return [...map.values()];
+  }, [coins, allCoins]);
+
+  const fromCoin = useMemo(() => mergedCoins.find(c => c.code === fromId), [mergedCoins, fromId]);
+  const toCoin   = useMemo(() => mergedCoins.find(c => c.code === toId),   [mergedCoins, toId]);
 
   const convertedAmount = useMemo(() => {
     if (!fromCoin || !toCoin || !amount || isNaN(Number(amount))) return null;
@@ -76,17 +174,14 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
     setToId(tmp);
   };
 
-  // Cross rates vs common stable pairs
+  // Cross rates: other coins from merged list vs fromCoin
   const crossRates = useMemo(() => {
     if (!fromCoin) return [];
-    return coins
-      .filter(c => c.code !== fromId)
+    return mergedCoins
+      .filter(c => c.code !== fromId && c.rate > 0)
       .slice(0, 5)
-      .map(c => ({
-        coin: c,
-        rate: fromCoin.rate / c.rate,
-      }));
-  }, [coins, fromCoin, fromId]);
+      .map(c => ({ coin: c, rate: fromCoin.rate / c.rate }));
+  }, [mergedCoins, fromCoin, fromId]);
 
   if (error && coins.length === 0) {
     return (
@@ -129,7 +224,14 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
           <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             From
           </label>
-          <CoinSelect coins={coins} value={fromId} onChange={setFromId} />
+          <CoinSearchSelect
+            allCoins={mergedCoins}
+            value={fromId}
+            onChange={setFromId}
+            onFocus={triggerFetch}
+            searchLoading={searchLoading}
+            placeholder="Search by name or ticker…"
+          />
           <input
             type="number"
             value={amount}
@@ -144,9 +246,7 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
           />
           {fromCoin && fromValueInBase !== null && (
             <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between px-1">
-              <span>
-                1 {fromCoin.code} = {formatPrice(fromCoin.rate, currency)}
-              </span>
+              <span>1 {fromCoin.code} = {formatPrice(fromCoin.rate, currency)}</span>
               <span className={`font-semibold ${(fromCoin.delta.day - 1) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                 {formatPercent((fromCoin.delta.day - 1) * 100)} 24h
               </span>
@@ -154,7 +254,7 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
           )}
         </div>
 
-        {/* Swap button */}
+        {/* Swap */}
         <div className="flex justify-center">
           <button
             onClick={handleSwap}
@@ -171,7 +271,14 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
           <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             To
           </label>
-          <CoinSelect coins={coins} value={toId} onChange={setToId} />
+          <CoinSearchSelect
+            allCoins={mergedCoins}
+            value={toId}
+            onChange={setToId}
+            onFocus={triggerFetch}
+            searchLoading={searchLoading}
+            placeholder="Search by name or ticker…"
+          />
           <div className="w-full px-4 py-3 rounded-2xl bg-emerald-500/5 dark:bg-emerald-500/[0.05] border border-emerald-500/20">
             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
               {convertedAmount !== null
@@ -204,9 +311,9 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
             {crossRates.map(({ coin, rate }) => (
               <div key={coin.code} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <img src={coin.png64} alt={coin.name} className="w-6 h-6 rounded-full" />
+                  {coin.png64 && <img src={coin.png64} alt={coin.name} className="w-6 h-6 rounded-full" />}
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{coin.name}</span>
-                  <span className="text-xs text-slate-400 uppercase">{coin.code}</span>
+                  <span className="text-xs text-slate-400 font-mono">{coin.code}</span>
                 </div>
                 <span className="text-sm font-bold text-slate-900 dark:text-white">
                   {rate < 0.0001
@@ -221,7 +328,7 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
         </div>
       )}
 
-      {/* Quick convert buttons */}
+      {/* Quick amounts */}
       {fromCoin && (
         <div className="rounded-3xl p-5 backdrop-blur-xl bg-white/60 dark:bg-white/[0.03] border border-white/30 dark:border-white/[0.07]">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
