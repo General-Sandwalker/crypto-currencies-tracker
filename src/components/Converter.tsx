@@ -30,6 +30,7 @@ function CoinSearchSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [dropdownStyle, setDropdownStyle] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -43,17 +44,26 @@ function CoinSearchSelect({
     ).slice(0, 20);
   }, [allCoins, query]);
 
-  // Close on outside click
+  // Close on outside click or scroll
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const onMouseDown = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const onScroll = () => setOpen(false);
+    document.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('scroll', onScroll, true);
+    };
   }, []);
 
   const handleOpen = () => {
     onFocus();
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      setDropdownStyle({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }
     setOpen(true);
     setQuery('');
     setTimeout(() => inputRef.current?.focus(), 0);
@@ -86,9 +96,11 @@ function CoinSearchSelect({
         <Search size={14} className="text-slate-400 flex-shrink-0" />
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown — fixed so it escapes any parent overflow/stacking context */}
       {open && (
-        <div className="absolute z-50 top-full mt-1 left-0 right-0 rounded-2xl shadow-2xl
+        <div
+          style={{ position: 'fixed', top: dropdownStyle.top, left: dropdownStyle.left, width: dropdownStyle.width, zIndex: 9999 }}
+          className="rounded-2xl shadow-2xl
           bg-white dark:bg-slate-800 border border-white/40 dark:border-white/[0.08]
           overflow-hidden backdrop-blur-xl">
           {/* Search input */}
