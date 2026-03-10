@@ -33,7 +33,7 @@ function CoinSelect({
       >
         {coins.map(c => (
           <option key={c.code} value={c.code} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
-            {c.name} ({c.symbol.toUpperCase()})
+            {c.name} ({c.code})
           </option>
         ))}
       </select>
@@ -145,7 +145,7 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
           {fromCoin && fromValueInBase !== null && (
             <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between px-1">
               <span>
-                1 {fromCoin.symbol.toUpperCase()} = {formatPrice(fromCoin.rate, currency)}
+                1 {fromCoin.code} = {formatPrice(fromCoin.rate, currency)}
               </span>
               <span className={`font-semibold ${(fromCoin.delta.day - 1) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                 {formatPercent((fromCoin.delta.day - 1) * 100)} 24h
@@ -182,7 +182,7 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
             </p>
             {toCoin && (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {toCoin.symbol.toUpperCase()} · {formatPrice(toCoin.rate, currency)} each
+                {toCoin.code} · {formatPrice(toCoin.rate, currency)} each
               </p>
             )}
           </div>
@@ -198,7 +198,7 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
       {crossRates.length > 0 && fromCoin && (
         <div className="rounded-3xl p-5 backdrop-blur-xl bg-white/60 dark:bg-white/[0.03] border border-white/30 dark:border-white/[0.07]">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-            1 {fromCoin.symbol.toUpperCase()} equals
+            1 {fromCoin.code} equals
           </p>
           <div className="space-y-3">
             {crossRates.map(({ coin, rate }) => (
@@ -206,7 +206,7 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
                 <div className="flex items-center gap-2">
                   <img src={coin.png64} alt={coin.name} className="w-6 h-6 rounded-full" />
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{coin.name}</span>
-                  <span className="text-xs text-slate-400 uppercase">{coin.symbol}</span>
+                  <span className="text-xs text-slate-400 uppercase">{coin.code}</span>
                 </div>
                 <span className="text-sm font-bold text-slate-900 dark:text-white">
                   {rate < 0.0001

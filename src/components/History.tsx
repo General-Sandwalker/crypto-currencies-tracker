@@ -105,7 +105,7 @@ export default function History({ coins, currency, initialCoinId = 'BTC', error:
           >
             {coins.map(c => (
               <option key={c.code} value={c.code} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
-                {c.name} ({c.symbol.toUpperCase()})
+                {c.name} ({c.code})
               </option>
             ))}
           </select>
@@ -144,7 +144,7 @@ export default function History({ coins, currency, initialCoinId = 'BTC', error:
           <div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedCoin.name}</h2>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-sm text-slate-500 dark:text-slate-400 uppercase">{selectedCoin.symbol}</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400 uppercase">{selectedCoin.code}</span>
               {stats && (
                 <span className={`flex items-center gap-1 text-sm font-semibold ${isUp ? 'text-emerald-500' : 'text-rose-500'}`}>
                   {isUp ? <TrendingUp size={14} /> : <TrendingDown size={14} />}

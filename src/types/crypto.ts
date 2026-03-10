@@ -1,6 +1,6 @@
 export interface Coin {
   code: string;
-  symbol: string;
+  symbol?: string;
   name: string;
   png64: string;
   rate: number;

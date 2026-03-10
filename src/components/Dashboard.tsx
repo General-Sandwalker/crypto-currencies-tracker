@@ -7,6 +7,27 @@ import CoinCard from './CoinCard';
 type SortKey = 'rank' | 'price' | 'change' | 'marketcap' | 'volume';
 type SortDir = 'asc' | 'desc';
 
+function SortBtn({ label, id, sortKey, sortDir, onSort }: {
+  label: string;
+  id: SortKey;
+  sortKey: SortKey;
+  sortDir: SortDir;
+  onSort: (key: SortKey) => void;
+}) {
+  return (
+    <button
+      onClick={() => onSort(id)}
+      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
+        ${sortKey === id
+          ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+          : 'text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/[0.05]'
+        }`}
+    >
+      {label} {sortKey === id ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+    </button>
+  );
+}
+
 interface DashboardProps {
   coins: Coin[];
   loading: boolean;
@@ -29,7 +50,7 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
   const filtered = useMemo(() => {
     let list = coins.filter(c =>
       c.name.toLowerCase().includes(query.toLowerCase()) ||
-      c.symbol.toLowerCase().includes(query.toLowerCase())
+      c.code.toLowerCase().includes(query.toLowerCase())
     );
     list = [...list].sort((a, b) => {
       let diff = 0;
@@ -52,19 +73,6 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
   const losers = useMemo(() => coins.filter(c => c.delta.day < 1).length, [coins]);
   const btc = useMemo(() => coins.find(c => c.code === 'BTC'), [coins]);
   const btcDom = btc && totalMcap > 0 ? ((btc.cap / totalMcap) * 100).toFixed(1) : '--';
-
-  const SortBtn = ({ label, id }: { label: string; id: SortKey }) => (
-    <button
-      onClick={() => handleSort(id)}
-      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
-        ${sortKey === id
-          ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-          : 'text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/[0.05]'
-        }`}
-    >
-      {label} {sortKey === id ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-    </button>
-  );
 
   if (error) {
     return (
@@ -141,11 +149,11 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
         {/* Sort buttons */}
         <div className="flex items-center gap-1 flex-wrap">
           <span className="text-xs text-slate-500 dark:text-slate-400 mr-1">Sort:</span>
-          <SortBtn label="Rank" id="rank" />
-          <SortBtn label="Price" id="price" />
-          <SortBtn label="24h %" id="change" />
-          <SortBtn label="MCap" id="marketcap" />
-          <SortBtn label="Volume" id="volume" />
+          <SortBtn label="Rank" id="rank" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+          <SortBtn label="Price" id="price" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+          <SortBtn label="24h %" id="change" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+          <SortBtn label="MCap" id="marketcap" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+          <SortBtn label="Volume" id="volume" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
         </div>
       </div>
 
@@ -196,7 +204,7 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
                   style={{ background: bg, color: text }}
                   className="rounded-lg px-2.5 py-1.5 text-xs font-semibold cursor-default select-none transition-transform hover:scale-105"
                 >
-                  <span className="font-bold uppercase">{coin.symbol}</span>
+                  <span className="font-bold uppercase">{coin.code}</span>
                   <span className="ml-1 opacity-80">{formatPercent(pct)}</span>
                 </div>
               );

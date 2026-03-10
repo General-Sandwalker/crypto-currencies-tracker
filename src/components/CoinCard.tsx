@@ -43,7 +43,7 @@ export default function CoinCard({ coin, currency, onClick, selected }: CoinCard
             {coin.name}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-            {coin.symbol}
+            {coin.code}
           </p>
         </div>
         <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
