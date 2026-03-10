@@ -54,7 +54,7 @@ function AppContent() {
           <Converter coins={coins} loading={loading} currency={currency} error={error} refetch={refetch} />
         )}
         {view === 'history' && (
-          <History coins={coins} currency={currency} initialCoinId={selectedCoinId} error={error} refetch={refetch} />
+          <History key={selectedCoinId} coins={coins} currency={currency} initialCoinId={selectedCoinId} error={error} refetch={refetch} />
         )}
       </main>
 

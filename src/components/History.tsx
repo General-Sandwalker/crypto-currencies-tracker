@@ -1,12 +1,13 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
-import { ChevronDown, TrendingUp, TrendingDown, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import type { Coin, Currency } from '../types/crypto';
 import { useHistory } from '../hooks/useHistory';
 import { formatPrice, formatDate, formatPercent } from '../utils/format';
+import { FEATURED_CODES } from '../hooks/useCrypto';
 
 const RANGES: { label: string; days: number | 'max' }[] = [
   { label: '1D', days: 1 },
@@ -46,12 +47,13 @@ const CustomTooltip = ({
 
 export default function History({ coins, currency, initialCoinId = 'BTC', error: globalError, refetch }: HistoryProps) {
   const [coinId, setCoinId] = useState(initialCoinId);
+  const [customCode, setCustomCode] = useState('');
   const [days, setDays] = useState<number | 'max'>(7);
 
-  // Sync when navigated via onSelectCoin from Dashboard
-  useEffect(() => {
-    setCoinId(initialCoinId);
-  }, [initialCoinId]);
+  const handleCustomSubmit = () => {
+    const code = customCode.trim().toUpperCase();
+    if (code.length >= 2) setCoinId(code);
+  };
 
   const { history, loading, error } = useHistory(coinId, days, currency);
 
@@ -93,30 +95,48 @@ export default function History({ coins, currency, initialCoinId = 'BTC', error:
 
       {/* Header controls */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Coin selector */}
-        <div className="relative flex-1 min-w-[200px] max-w-xs">
-          <select
-            value={coinId}
-            onChange={e => setCoinId(e.target.value)}
-            className="w-full appearance-none pl-10 pr-8 py-2.5 rounded-xl text-sm font-semibold
+        {/* Featured coin quick-select */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {FEATURED_CODES.map(code => {
+            const c = coins.find(x => x.code === code);
+            return (
+              <button
+                key={code}
+                onClick={() => { setCoinId(code); setCustomCode(''); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                  coinId === code && !customCode
+                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                    : 'bg-black/5 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 border border-transparent hover:border-white/20'
+                }`}
+              >
+                {c?.png64 && <img src={c.png64} alt={code} className="w-4 h-4 rounded-full" />}
+                {code}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Custom coin code input */}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={customCode}
+            onChange={e => setCustomCode(e.target.value.toUpperCase())}
+            onKeyDown={e => e.key === 'Enter' && handleCustomSubmit()}
+            placeholder="Any code… DOGE"
+            maxLength={10}
+            className="w-32 px-3 py-1.5 rounded-xl text-xs font-semibold uppercase
               bg-white/70 dark:bg-slate-800 border border-white/30 dark:border-white/[0.08]
               text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/40
-              backdrop-blur-sm transition-all cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+              placeholder:normal-case placeholder:text-slate-400 transition-all"
+          />
+          <button
+            onClick={handleCustomSubmit}
+            disabled={customCode.trim().length < 2}
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {coins.map(c => (
-              <option key={c.code} value={c.code} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
-                {c.name} ({c.code})
-              </option>
-            ))}
-          </select>
-          {selectedCoin && (
-            <img
-              src={selectedCoin.png64}
-              alt={selectedCoin.name}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full pointer-events-none"
-            />
-          )}
-          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            Go
+          </button>
         </div>
 
         {/* Range tabs */}

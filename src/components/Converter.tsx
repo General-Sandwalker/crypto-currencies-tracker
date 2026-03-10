@@ -80,7 +80,7 @@ export default function Converter({ coins, loading, currency, error, refetch }: 
   const crossRates = useMemo(() => {
     if (!fromCoin) return [];
     return coins
-      .filter(c => ['BTC', 'ETH', 'USDT', 'USDC', 'BNB'].includes(c.code) && c.code !== fromId)
+      .filter(c => c.code !== fromId)
       .slice(0, 5)
       .map(c => ({
         coin: c,

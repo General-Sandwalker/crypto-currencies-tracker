@@ -4,6 +4,8 @@ import type { Coin, Currency } from '../types/crypto';
 const LCW_BASE = 'https://api.livecoinwatch.com';
 const API_KEY = import.meta.env.VITE_LCW_API_KEY as string;
 
+export const FEATURED_CODES = ['BTC', 'ETH', 'SOL', 'BNB'] as const;
+
 export const useCrypto = (currency: Currency = 'usd') => {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,18 +21,20 @@ export const useCrypto = (currency: Currency = 'usd') => {
     try {
       if (!silent) setLoading(true);
       setError(null);
-      const res = await fetch(`${LCW_BASE}/coins/list`, {
+      // /coins/map fetches only the exact codes we pass — 1 credit, minimal payload
+      const res = await fetch(`${LCW_BASE}/coins/map`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
           'x-api-key': API_KEY,
         },
         body: JSON.stringify({
+          codes: [...FEATURED_CODES],
           currency: currency.toUpperCase(),
           sort: 'rank',
           order: 'ascending',
           offset: 0,
-          limit: 50,
+          limit: FEATURED_CODES.length,
           meta: true,
         }),
       });
@@ -58,6 +62,7 @@ export const useCrypto = (currency: Currency = 'usd') => {
     setLoading(true);
     setError(null);
     fetchCoins();
+    // Refresh every 60s — only 4 coins, 1 credit per call
     const interval = setInterval(() => fetchCoins(true), 60_000);
     return () => clearInterval(interval);
   }, [fetchCoins]);
