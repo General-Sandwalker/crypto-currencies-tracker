@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeftRight, Search, Loader2, AlertCircle, RefreshCw, X } from 'lucide-react';
 import type { Coin, Currency } from '../types/crypto';
 import { formatPrice, formatPercent } from '../utils/format';
@@ -30,6 +31,7 @@ function CoinSearchSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [rect, setRect] = useState<DOMRect | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -43,17 +45,26 @@ function CoinSearchSelect({
     ).slice(0, 20);
   }, [allCoins, query]);
 
-  // Close on outside click only
+  // Close on outside click; recompute position on resize
   useEffect(() => {
+    if (!open) return;
     const onMouseDown = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    const onResize = () => {
+      if (ref.current) setRect(ref.current.getBoundingClientRect());
+    };
     document.addEventListener('mousedown', onMouseDown);
-    return () => document.removeEventListener('mousedown', onMouseDown);
-  }, []);
+    window.addEventListener('resize', onResize);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [open]);
 
   const handleOpen = () => {
     onFocus();
+    if (ref.current) setRect(ref.current.getBoundingClientRect());
     setOpen(true);
     setQuery('');
     setTimeout(() => inputRef.current?.focus(), 50);
@@ -65,8 +76,68 @@ function CoinSearchSelect({
     setQuery('');
   };
 
+  const dropdown = open && rect && createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      }}
+      className="rounded-2xl shadow-2xl
+        bg-white dark:bg-slate-800 border border-slate-100 dark:border-white/[0.10]
+        overflow-hidden backdrop-blur-xl"
+    >
+      {/* Search input */}
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-100 dark:border-white/[0.06]">
+        <Search size={13} className="text-slate-400 flex-shrink-0" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder={placeholder}
+          className="flex-1 text-sm bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
+        />
+        {query && (
+          <button onClick={() => setQuery('')} className="p-0.5">
+            <X size={13} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" />
+          </button>
+        )}
+      </div>
+
+      {/* Results */}
+      <div className="max-h-52 overflow-y-auto py-1">
+        {searchLoading && allCoins.length === 0 ? (
+          <div className="flex items-center gap-2 px-3 py-3 text-xs text-slate-400">
+            <Loader2 size={13} className="animate-spin text-emerald-500" /> Loading coins…
+          </div>
+        ) : results.length === 0 ? (
+          <p className="px-3 py-3 text-xs text-slate-400">No coins found</p>
+        ) : (
+          results.map(c => (
+            <button
+              key={c.code}
+              type="button"
+              onMouseDown={e => { e.preventDefault(); handleSelect(c.code); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors
+                hover:bg-emerald-50 dark:hover:bg-emerald-500/10
+                ${c.code === value ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-800 dark:text-slate-200'}`}
+            >
+              {c.png64 && <img src={c.png64} alt={c.code} className="w-5 h-5 rounded-full flex-shrink-0" />}
+              <span className="flex-1 truncate">{c.name}</span>
+              <span className="text-xs text-slate-400 font-mono">{c.code}</span>
+            </button>
+          ))
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+
   return (
-    <div ref={ref} className={`relative ${open ? 'z-30' : 'z-0'}`} style={{ isolation: open ? 'isolate' : undefined }}>
+    <div ref={ref} className="relative">
       {/* Trigger */}
       <button
         type="button"
@@ -86,56 +157,7 @@ function CoinSearchSelect({
         <Search size={14} className="text-slate-400 flex-shrink-0" />
       </button>
 
-      {/* Dropdown — absolutely positioned within relative parent */}
-      {open && (
-        <div className="absolute left-0 right-0 top-full mt-1 rounded-2xl shadow-2xl z-50
-          bg-white dark:bg-slate-800 border border-slate-100 dark:border-white/[0.10]
-          overflow-hidden backdrop-blur-xl">
-          {/* Search input */}
-          <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-100 dark:border-white/[0.06]">
-            <Search size={13} className="text-slate-400 flex-shrink-0" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder={placeholder}
-              className="flex-1 text-sm bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
-            />
-            {query && (
-              <button onClick={() => setQuery('')} className="p-0.5">
-                <X size={13} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" />
-              </button>
-            )}
-          </div>
-
-          {/* Results */}
-          <div className="max-h-52 overflow-y-auto py-1">
-            {searchLoading && allCoins.length === 0 ? (
-              <div className="flex items-center gap-2 px-3 py-3 text-xs text-slate-400">
-                <Loader2 size={13} className="animate-spin text-emerald-500" /> Loading coins…
-              </div>
-            ) : results.length === 0 ? (
-              <p className="px-3 py-3 text-xs text-slate-400">No coins found</p>
-            ) : (
-              results.map(c => (
-                <button
-                  key={c.code}
-                  type="button"
-                  onClick={() => handleSelect(c.code)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors
-                    hover:bg-emerald-50 dark:hover:bg-emerald-500/10
-                    ${c.code === value ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-800 dark:text-slate-200'}`}
-                >
-                  {c.png64 && <img src={c.png64} alt={c.code} className="w-5 h-5 rounded-full flex-shrink-0" />}
-                  <span className="flex-1 truncate">{c.name}</span>
-                  <span className="text-xs text-slate-400 font-mono">{c.code}</span>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+      {dropdown}
     </div>
   );
 }
