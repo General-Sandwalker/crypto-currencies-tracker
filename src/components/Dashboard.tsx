@@ -56,19 +56,19 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
   return (
     <div className="space-y-6">
       {/* Market stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         {[
           { label: 'Featured MCap',    value: formatMarketCap(totalMcap, currency), icon: <BarChart2 size={16} className="text-emerald-500" /> },
-          { label: '24h Volume',       value: formatMarketCap(totalVol, currency),  icon: <BarChart2 size={16} className="text-teal-500" /> },
-          { label: 'Gainers / Losers', value: `${gainers} / ${losers}`,             icon: <TrendingUp size={16} className="text-emerald-400" /> },
+          { label: '24h Volume',       value: formatMarketCap(totalVol, currency),  icon: <BarChart2 size={16} className="text-sky-500" /> },
+          { label: 'Gainers / Losers', value: `${gainers} / ${losers}`,             icon: <TrendingUp size={16} className="text-lime-500" /> },
           { label: 'BTC Dominance',    value: `${btcDom}%`,                         icon: <BarChart2 size={16} className="text-amber-500" /> },
         ].map(stat => (
-          <div key={stat.label} className="rounded-2xl p-4 backdrop-blur-xl bg-white/60 dark:bg-white/[0.03] border border-white/30 dark:border-white/[0.06]">
+          <div key={stat.label} className="rounded-2xl p-3 sm:p-4 backdrop-blur-xl bg-white/65 dark:bg-white/[0.03] border border-white/40 dark:border-white/[0.06]">
             <div className="flex items-center gap-2 mb-1">
               {stat.icon}
-              <span className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</span>
+              <span className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">{stat.label}</span>
             </div>
-            <p className="text-lg font-bold text-slate-900 dark:text-white">{loading ? '—' : stat.value}</p>
+            <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tabular-nums">{loading ? '—' : stat.value}</p>
           </div>
         ))}
       </div>
@@ -126,7 +126,7 @@ export default function Dashboard({ coins, loading, error, currency, onSelectCoi
                 <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
                   {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mt-2">
                   {searchResults.slice(0, 20).map(coin => (
                     <CoinCard
                       key={coin.code}

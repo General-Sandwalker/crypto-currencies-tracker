@@ -94,7 +94,7 @@ export default function History({ coins, currency, initialCoinId = 'BTC', error:
       )}
 
       {/* Header controls */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Featured coin quick-select */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {FEATURED_CODES.map(code => {
@@ -123,9 +123,9 @@ export default function History({ coins, currency, initialCoinId = 'BTC', error:
             value={customCode}
             onChange={e => setCustomCode(e.target.value.toUpperCase())}
             onKeyDown={e => e.key === 'Enter' && handleCustomSubmit()}
-            placeholder="Any code… DOGE"
+            placeholder="DOGE…"
             maxLength={10}
-            className="w-32 px-3 py-1.5 rounded-xl text-xs font-semibold uppercase
+            className="w-24 sm:w-32 px-3 py-1.5 rounded-xl text-xs font-semibold uppercase
               bg-white/70 dark:bg-slate-800 border border-white/30 dark:border-white/[0.08]
               text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/40
               placeholder:normal-case placeholder:text-slate-400 transition-all"
@@ -140,7 +140,7 @@ export default function History({ coins, currency, initialCoinId = 'BTC', error:
         </div>
 
         {/* Range tabs */}
-        <div className="flex items-center gap-1 bg-black/5 dark:bg-white/[0.04] rounded-xl p-1">
+        <div className="flex items-center gap-0.5 bg-black/5 dark:bg-white/[0.04] rounded-xl p-1">
           {RANGES.map(r => (
             <button
               key={r.label}
@@ -159,10 +159,10 @@ export default function History({ coins, currency, initialCoinId = 'BTC', error:
 
       {/* Coin header */}
       {selectedCoin && (
-        <div className="flex items-center gap-4">
-          <img src={selectedCoin.png64} alt={selectedCoin.name} className="w-12 h-12 rounded-full" />
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedCoin.name}</h2>
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <img src={selectedCoin.png64} alt={selectedCoin.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{selectedCoin.name}</h2>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-sm text-slate-500 dark:text-slate-400 uppercase">{selectedCoin.code}</span>
               {stats && (
@@ -174,7 +174,7 @@ export default function History({ coins, currency, initialCoinId = 'BTC', error:
             </div>
           </div>
           {stats && (
-            <p className="ml-auto text-3xl font-bold text-slate-900 dark:text-white">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
               {formatPrice(stats.close, currency)}
             </p>
           )}
@@ -210,7 +210,7 @@ export default function History({ coins, currency, initialCoinId = 'BTC', error:
       )}
 
       {/* Chart */}
-      <div className="rounded-3xl p-5 pt-6 backdrop-blur-xl bg-white/60 dark:bg-white/[0.03] border border-white/30 dark:border-white/[0.07] shadow-xl shadow-black/5">
+      <div className="rounded-3xl p-4 sm:p-5 pt-5 sm:pt-6 backdrop-blur-xl bg-white/60 dark:bg-white/[0.03] border border-white/30 dark:border-white/[0.07] shadow-xl shadow-black/5">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-72 gap-4">
             <Loader2 className="text-emerald-500 animate-spin" size={32} />

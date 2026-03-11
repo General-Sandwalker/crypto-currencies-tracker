@@ -21,13 +21,18 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen transition-colors duration-500 bg-gradient-to-br from-emerald-50 via-teal-50/40 to-cyan-100/50 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30">
+    <div className="min-h-screen transition-colors duration-500 bg-gradient-to-br from-green-50 via-emerald-50/60 to-sky-100/60 dark:from-[#030d07] dark:via-slate-900 dark:to-[#051a10]">
 
-      {/* Decorative blobs */}
+      {/* Decorative clean-energy blobs */}
       <div aria-hidden className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-emerald-400/10 dark:bg-emerald-600/5 blur-3xl" />
-        <div className="absolute top-1/3 -right-60 w-[500px] h-[500px] rounded-full bg-teal-400/10 dark:bg-teal-600/5 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] rounded-full bg-cyan-400/10 dark:bg-cyan-600/5 blur-3xl" />
+        {/* Forest green — nature/wind */}
+        <div className="absolute -top-48 -left-48 w-[700px] h-[700px] rounded-full bg-emerald-400/12 dark:bg-emerald-500/6 blur-[120px]" />
+        {/* Solar amber — sunlight */}
+        <div className="absolute top-0 right-0 w-[420px] h-[420px] rounded-full bg-amber-300/8 dark:bg-amber-500/4 blur-[100px]" />
+        {/* Sky blue — clean air / wind power */}
+        <div className="absolute top-1/2 -right-40 w-[500px] h-[500px] rounded-full bg-sky-400/10 dark:bg-sky-600/5 blur-[110px]" />
+        {/* Lime — solar ground */}
+        <div className="absolute -bottom-20 left-1/4 w-[450px] h-[450px] rounded-full bg-lime-400/8 dark:bg-lime-600/4 blur-[100px]" />
       </div>
 
       <Navbar
@@ -39,7 +44,7 @@ function AppContent() {
         refetch={refetch}
       />
 
-      <main className="container mx-auto px-4 py-7 max-w-7xl">
+      <main className="container mx-auto px-3 sm:px-4 py-5 sm:py-7 max-w-7xl">
         {view === 'dashboard' && (
           <Dashboard
             coins={coins}
@@ -58,8 +63,8 @@ function AppContent() {
         )}
       </main>
 
-      <footer className="text-center py-8 text-xs text-slate-400 dark:text-slate-600">
-        Data powered by <a href="https://www.livecoinwatch.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-300 transition-colors">Live Coin Watch</a> &bull; Prices update every 60s &bull; Not financial advice
+      <footer className="text-center py-8 text-xs text-slate-400 dark:text-slate-500">
+        Data by <a href="https://www.livecoinwatch.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors">Live Coin Watch</a> &bull; Refreshes every 60 s &bull; Not financial advice
       </footer>
     </div>
   );
